@@ -1,58 +1,45 @@
 using Gadfly
-
-xor_oscillation_seed = uint32(123456789)
-xorshift_original_seed = uint32(0xACE1)
-linear_congruential_generator_seed = uint32(123456789)
-linear_feedback_shift_regeister_val = uint16(123456789)
-lfsr = uint16(0xACE1)
-
 #Note for non-julia users, the operator '$' is the XOR operation in this language.
 #Function found on wiki, modified the seed values slightly.
 
 #	XOR_Oscillation
 # Based on the XORShift random number function, I made this a while back for
 # a game based research project I worked on.
+xorshift_seed = uint32(123456789)
 y = uint32(362436069);
-z = uint32(521288629);
-w = uint32(88675123);
-function xor_oscillation()
-	global xor_oscillation_seed
+z = uint32(52128877);
+w = uint32(886751225);
+function xorshift()
+	global xorshift_seed
     global y
 	global z
 	global w
 
-    t = xor_oscillation_seed $ (xor_oscillation_seed << 11);
-    xor_oscillation_seed = y; y = z; z = w;
+    t = xorshift_seed $ (xorshift_seed << 11);
+    xorshift_seed = y; y = z; z = w;
     w = w $ (w >>> 19) $ (t $ (t >>> 8));
     return w;
 end
 
-
-#Most common xorshift
-function xorshift_original()
-	global xorshift_original_seed
-
-	xorshift_original_seed $= (xorshift_original_seed << 21);
-	xorshift_original_seed $= (xorshift_original_seed >>> 35);
-	xorshift_original_seed $= (xorshift_original_seed << 4);
-	return xorshift_original_seed;
-end
-
+linear_congruential_generator_seed = uint32(123456789)
 #Standard in older versions of java and C#
 function linear_congruential_generator()
 	global linear_congruential_generator_seed
 	#Make a number cloase to a power of two, for a in this case, this is jsut 2^32
 	a = uint64(1103515245)
 	
-	#C is a relatively prime and close to a power of 2
+	#C must be a relatively prime and close to a power of 2
 	c = uint64(12345)
 	
 	#Modulo, also called M works well if this is a power of 2 and close to a prime number.
 	modulo = uint64(2^31)
-	linear_congruential_generator_seed = ((a * linear_congruential_generator_seed + c) % modulo)# &  0xffffff
+	linear_congruential_generator_seed = ((a * linear_congruential_generator_seed + c) % modulo)
 	return linear_congruential_generator_seed
 end
 
+linear_feedback_shift_regeister_val = uint16(123456789)
+lfsr = uint16(0xACE1)
+#Standard in newer versions of java and C#
 function linear_feedback_shift_register()
 	global linear_feedback_shift_regeister_val
 	global lfsr
@@ -61,42 +48,38 @@ function linear_feedback_shift_register()
 	return lfsr
 end
 
-function plotRanges()
+function plotRNGs()
 	max = 100
-	xorshift_original_results =  zeros(max)
-	xor_oscillation_results = zeros(max)
+	xorshift_oscillation_results = zeros(max)
 	lcg_results = zeros(max)
 	lfsr_results = zeros(max)
 	
 	for i = 1:max
-		returned_result = xor_oscillation()
-		println(returned_result)
-		lfsr_results[i] = returned_result
-		#lcg_results[i] = linear_congruential_generator()
-		#xor_oscillation_results[i] = xor_oscillation()
+		xorshift_oscillation_results[i] = xorshift()
+		lcg_results[i] = linear_congruential_generator()
+		lfsr_results[i] = linear_feedback_shift_register()
+		println(lfsr_results[i])
 	end
-	
 	samplePoints = [1:1:max]
-	#plot(x = samplePoints, y = [xor_oscillation_results, lcg_results, xorshift_original_results], color = "", Guide.XLabel("seed #"), Guide.YLabel("Number generated"))
-	plot(x = samplePoints, y = lfsr_results,  Guide.XLabel("seed #"), Guide.YLabel("Number generated"))
+	data = Gadfly.DataFrame(samplePoints = 1:100, results = lcg_results)
+
+	a = Gadfly.DataFrame(x = samplePoints, y = xorshift_oscillation_results, RNG = "XORShift")
+	b = Gadfly.DataFrame(x = samplePoints, y = lcg_results, RNG = "Least Congruential generator")
+	c = Gadfly.DataFrame(x = samplePoints, y = lfsr_results, RNG = "Linear Feed Back shift generator")
+	RNG_Results = vcat(a, b, c)
+	p = plot(RNG_Results, x = "x", y = "y", color = "RNG", Geom.point, Scale.discrete_color_manual("blue","red", "green"), Guide.XLabel("Number of Points"), Guide.YLabel("y"))
 end
 
-function plotSeedDomains()
+function plotLCG()
 	max = 100
-	xorshift_original_results =  zeros(max)
-	xor_oscillation_results = zeros(max)
 	lcg_results = zeros(max)
 	
 	for i = 1:max
-		#xorshift_original_results[i] = xorshift_original(uint32(i))
-		#lcg_results[i] = linear_congruential_generator(uint32(i))
-		#xor_oscillation_results[i] = xor_oscillation(uint32(i))
-		xor_oscillation_seed = xorshift_original_seed = linear_congruential_generator_seed = uint32(123456789)
+		lcg_results[i] = linear_congruential_generator()
 	end
-	
 	samplePoints = [1:1:max]
-	#plot(x = samplePoints, y = [xor_oscillation_results, lcg_results, xorshift_original_results], color = "", Guide.XLabel("seed #"), Guide.YLabel("Number generated"))
-	plot(x = samplePoints, y = lcg_results,  Guide.XLabel("seed #"), Guide.YLabel("Number generated"))
-end
+	data = Gadfly.DataFrame(samplePoints = 1:100, results = lcg_results)
 
-plotRanges()
+	a = Gadfly.DataFrame(x = samplePoints, y = lcg_results, RNG = "Least Congruential generator")
+	plot(a, x = "x", y = "y", color = "RNG", Geom.point, Scale.discrete_color_manual("blue","red", "green"), Guide.XLabel("Number of Points"), Guide.YLabel("y"))
+end

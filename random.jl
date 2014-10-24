@@ -29,8 +29,8 @@ linear_congruential_generator_seed = uint32(123456789)
 #Standard in older versions of java and C#, not so fast but good for integrating with a utility function.
 function linear_congruential_generator()
 	global linear_congruential_generator_seed
-	#a, c, and modulo must be a relatively prime number and close to a power of two.  The closer the numbers are in value, they converge.
-	#to form a linear equation and there is no randomness involved.
+	#c and m must be relatively prime, a - 1 must be a prime factor of m, and a-1 is a multiple of 4 if m is a multiple of 4.  The closer 
+	# numbers are in value, they converge to form a linear equation and there is no randomness involved.
 	a = uint64(1103515245)
 	
 	c = uint64(12345)

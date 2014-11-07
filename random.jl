@@ -5,9 +5,9 @@ using Gadfly
 #Note for non-julia users, the operator '$' is the XOR operation in this language.
 #Function found on wiki, modified the seed values slightly.
 
-#	XOR_Oscillation
-# Based on the XORShift random number function, I made this a while back for
-# a game based research project I worked on.
+#	XOR Shift
+# An implementation of the XOR Shift random number generator that I use normally over the the standard random number generator
+# In whatever framework I use.  You can find good seed values if you look through a book called "Numerical Recipies" by William H. Press.
 xorshift_seed = uint32(123456789)
 #Any positive seeds will do but this will not produce zero ever, large prime numbers close to powers of two work best.
 y = uint32(362436069);
